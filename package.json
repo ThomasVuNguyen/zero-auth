@@ -1,0 +1,11 @@
+{
+  "name": "zero-auth-local",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-only zero-auth demo: cookie-based ID + JSON store",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
+
