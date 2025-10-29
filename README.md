@@ -3,7 +3,7 @@ An identity system without the need for logins
 
 ## Try it out
 
-🌐 **Live Demo**: https://starmind-72daa.web.app
+🌐 **Live Demo**: https://zeroauthatall.web.app
 
 ## Local Run
 
