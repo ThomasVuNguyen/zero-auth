@@ -3,59 +3,235 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>zero-auth (local)</title>
+    <title>zero-auth</title>
     <style>
       :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-      body { margin: 2rem; color: #222; }
-      code { background: #f3f3f3; padding: .2rem .35rem; border-radius: 4px; }
-      button { padding: .4rem .7rem; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
-      button:hover { background: #f6f6f6; }
-      .row { margin: 1rem 0; }
-      .muted { color: #666; font-size: .9rem; }
+      body { 
+        margin: 0; 
+        min-height: 100vh;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+      h1 { margin-top: 0; }
+      code { background: rgba(255,255,255,0.2); padding: .2rem .35rem; border-radius: 4px; }
+      button { 
+        padding: .6rem 1.2rem; 
+        border-radius: 8px; 
+        border: 2px solid currentColor; 
+        background: rgba(255,255,255,0.1);
+        color: inherit;
+        cursor: pointer; 
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+      button:hover { 
+        background: rgba(255,255,255,0.2); 
+        transform: translateY(-2px);
+      }
+      .row { margin: 1.5rem 0; }
+      .muted { opacity: 0.8; font-size: .9rem; }
+      .name-display {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 1rem 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      }
+      .loading { opacity: 0.6; }
     </style>
   </head>
   <body>
-    <h1>zero-auth (local)</h1>
-    <p>You are recognized as:</p>
-    <div class="row"><code id="uid">(loading…)</code></div>
-    <div class="row">
-      <button id="reset">Reset identity</button>
+    <div class="container">
+      <h1>zero-auth</h1>
+      <p>You are recognized as:</p>
+      <div class="row">
+        <div class="name-display" id="nameDisplay">(loading…)</div>
+        <code id="uid" class="muted"></code>
+      </div>
+      <div class="row">
+        <button id="reset">Reset identity</button>
+      </div>
+      <p class="muted">Same browser profile = same identity. Clearing site data resets it.</p>
     </div>
-    <p class="muted">Same browser profile = same identity. Clearing site data resets it.</p>
 
-    <script>
-      async function fetchMe() {
-        const res = await fetch('/me', { credentials: 'same-origin' });
-        if (!res.ok) throw new Error('Failed to fetch /me');
-        return res.json();
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+      import { getFirestore, doc, getDoc, setDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+      
+      // Try to import Firebase config, fallback to inline or window config
+      let firebaseConfig;
+      try {
+        const configModule = await import('./firebase-config.js');
+        firebaseConfig = configModule.firebaseConfig;
+        
+        // Check if config is still using placeholders
+        if (firebaseConfig.apiKey === "YOUR_API_KEY_HERE" || firebaseConfig.apiKey.includes("YOUR_")) {
+          throw new Error('Config not set');
+        }
+      } catch (e) {
+        // Fallback: use window.firebaseConfig if set
+        if (window.firebaseConfig && window.firebaseConfig.apiKey && !window.firebaseConfig.apiKey.includes("YOUR_")) {
+          firebaseConfig = window.firebaseConfig;
+        } else {
+          // Show error message since config is required
+          document.getElementById('nameDisplay').textContent = 'Firebase config required';
+          document.getElementById('uid').textContent = 'Please configure Firebase in firebase-config.js';
+          throw new Error('Firebase configuration is required. Please update public/firebase-config.js with your Firebase web app config.');
+        }
       }
-      async function resetId() {
-        const res = await fetch('/reset', { method: 'POST', credentials: 'same-origin' });
-        if (!res.ok) throw new Error('Failed to reset');
-        return res.json();
+      
+      // Validate config
+      if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+        throw new Error('Invalid Firebase configuration');
       }
 
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // Generate deterministic user ID from localStorage
+      function getOrCreateUserId() {
+        let userId = localStorage.getItem('user_id');
+        if (!userId) {
+          userId = crypto.randomUUID();
+          localStorage.setItem('user_id', userId);
+        }
+        return userId;
+      }
+
+      // Funny names list
+      const adjectives = ['Vibe', 'Pickled', 'Cosmic', 'Spicy', 'Electric', 'Magical', 'Silly', 'Brave', 'Swift', 'Golden', 'Silver', 'Neon', 'Happy', 'Gigantic', 'Tiny', 'Wild', 'Calm', 'Bright', 'Shadow', 'Mystic'];
+      const nouns = ['Genius', 'Teddy', 'Dragon', 'Panda', 'Wizard', 'Tiger', 'Phoenix', 'Unicorn', 'Fox', 'Shark', 'Eagle', 'Lion', 'Bear', 'Owl', 'Wolf', 'Falcon', 'Hawk', 'Deer', 'Rabbit', 'Turtle'];
+
+      // Generate funny name from userId (deterministic)
+      function generateFunnyName(userId) {
+        const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const adjIdx = hash % adjectives.length;
+        const nounIdx = (hash * 7) % nouns.length;
+        return `${adjectives[adjIdx]} ${nouns[nounIdx]}`;
+      }
+
+      // Generate colors from userId (deterministic)
+      function generateColors(userId) {
+        const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        
+        // Generate background color (lighter, more vibrant)
+        const bgHue = hash % 360;
+        const bgSaturation = 60 + (hash % 30);
+        const bgLightness = 85 + (hash % 10);
+        const bgColor = `hsl(${bgHue}, ${bgSaturation}%, ${bgLightness}%)`;
+        
+        // Generate main/text color (darker, contrasting)
+        const mainHue = (bgHue + 180) % 360; // Complementary color
+        const mainSaturation = 70 + (hash % 20);
+        const mainLightness = 20 + (hash % 15);
+        const mainColor = `hsl(${mainHue}, ${mainSaturation}%, ${mainLightness}%)`;
+        
+        return { bgColor, mainColor };
+      }
+
+      // Load or create user data
+      async function loadOrCreateUser() {
+        const userId = getOrCreateUserId();
+        const userRef = doc(db, 'zero-auth', userId);
+        
+        try {
+          const userSnap = await getDoc(userRef);
+          
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            return {
+              id: userId,
+              name: userData.name,
+              bgColor: userData.bgColor,
+              mainColor: userData.mainColor
+            };
+          } else {
+            // Create new user with generated name and colors
+            const name = generateFunnyName(userId);
+            const colors = generateColors(userId);
+            const userData = {
+              id: userId,
+              name: name,
+              bgColor: colors.bgColor,
+              mainColor: colors.mainColor,
+              created_at: new Date().toISOString(),
+              last_seen: new Date().toISOString()
+            };
+            await setDoc(userRef, userData);
+            return userData;
+          }
+        } catch (error) {
+          console.error('Error loading user:', error);
+          // Fallback to generated values if Firebase fails
+          const name = generateFunnyName(userId);
+          const colors = generateColors(userId);
+          return {
+            id: userId,
+            name: name,
+            bgColor: colors.bgColor,
+            mainColor: colors.mainColor
+          };
+        }
+      }
+
+      // Update user's last_seen
+      async function updateLastSeen(userId) {
+        const userRef = doc(db, 'zero-auth', userId);
+        try {
+          await setDoc(userRef, { last_seen: new Date().toISOString() }, { merge: true });
+        } catch (error) {
+          console.error('Error updating last_seen:', error);
+        }
+      }
+
+      // Reset identity
+      async function resetIdentity() {
+        const userId = localStorage.getItem('user_id');
+        if (userId) {
+          try {
+            const userRef = doc(db, 'zero-auth', userId);
+            await deleteDoc(userRef);
+          } catch (error) {
+            console.error('Error deleting user:', error);
+          }
+        }
+        localStorage.removeItem('user_id');
+        location.reload();
+      }
+
+      // Apply colors to page
+      function applyColors(bgColor, mainColor) {
+        document.body.style.backgroundColor = bgColor;
+        document.body.style.color = mainColor;
+      }
+
+      // Initialize app
       (async () => {
         try {
-          const { id } = await fetchMe();
-          document.getElementById('uid').textContent = id;
+          const userData = await loadOrCreateUser();
+          document.getElementById('nameDisplay').textContent = userData.name;
+          document.getElementById('uid').textContent = userData.id;
+          applyColors(userData.bgColor, userData.mainColor);
+          updateLastSeen(userData.id);
         } catch (e) {
-          document.getElementById('uid').textContent = 'Error loading ID';
+          document.getElementById('nameDisplay').textContent = 'Error loading identity';
+          document.getElementById('uid').textContent = '';
           console.error(e);
         }
       })();
 
       document.getElementById('reset').addEventListener('click', async () => {
-        try {
-          await resetId();
-          const { id } = await fetchMe();
-          document.getElementById('uid').textContent = id;
-        } catch (e) {
-          alert('Failed to reset identity');
-          console.error(e);
+        if (confirm('Are you sure you want to reset your identity?')) {
+          await resetIdentity();
         }
       });
     </script>
   </body>
-  </html>
+</html>
 

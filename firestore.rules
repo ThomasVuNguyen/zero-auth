@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Models collection - public read, anyone can write
+    match /models/{modelId} {
+      allow read: if true;  // Public read access
+      allow write: if true; // Anyone can create/update models
+    }
+    
+    // Preferences collection - public read/write for analytics
+    match /preferences/{preferenceId} {
+      allow read: if true;  // Public read access for analytics
+      allow write: if true; // Anyone can record preferences
+    }
+    
+    // Comments collection - public read/write for social features
+    match /comments/{commentId} {
+      allow read: if true;  // Public read access
+      allow write: if true; // Anyone can create comments
+    }
+    
+    // Zero-auth collection - public read/write for zero-auth identity system
+    match /zero-auth/{userId} {
+      allow read: if true;  // Public read access
+      allow write: if true; // Anyone can create/update their identity
+    }
+  }
+}
