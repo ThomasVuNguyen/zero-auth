@@ -113,7 +113,7 @@
         const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         const adjIdx = hash % 100;
         const nounIdx = (hash * 7) % 100;
-        return `${adjectives[adjIdx]} ${nouns[nounIdx]}`;
+        return `${adjectives[adjIdx]} ${nouns[nounIdx]}`;  
       }
 
       // Generate colors from userId (deterministic)
