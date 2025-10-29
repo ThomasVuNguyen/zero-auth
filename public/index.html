@@ -104,15 +104,15 @@
         return userId;
       }
 
-      // Funny names list
-      const adjectives = ['Vibe', 'Pickled', 'Cosmic', 'Spicy', 'Electric', 'Magical', 'Silly', 'Brave', 'Swift', 'Golden', 'Silver', 'Neon', 'Happy', 'Gigantic', 'Tiny', 'Wild', 'Calm', 'Bright', 'Shadow', 'Mystic'];
-      const nouns = ['Genius', 'Teddy', 'Dragon', 'Panda', 'Wizard', 'Tiger', 'Phoenix', 'Unicorn', 'Fox', 'Shark', 'Eagle', 'Lion', 'Bear', 'Owl', 'Wolf', 'Falcon', 'Hawk', 'Deer', 'Rabbit', 'Turtle'];
+      // Funny names list - 100 adjectives x 100 nouns = 10,000 combinations
+      const adjectives = ['Vibe', 'Pickled', 'Cosmic', 'Spicy', 'Electric', 'Magical', 'Silly', 'Brave', 'Swift', 'Golden', 'Silver', 'Neon', 'Happy', 'Gigantic', 'Tiny', 'Wild', 'Calm', 'Bright', 'Shadow', 'Mystic', 'Crazy', 'Smooth', 'Bold', 'Gentle', 'Fierce', 'Fluffy', 'Radiant', 'Frozen', 'Burning', 'Sneaky', 'Wise', 'Jolly', 'Epic', 'Mighty', 'Cheerful', 'Dreamy', 'Sparkly', 'Quiet', 'Loud', 'Merry', 'Grumpy', 'Sleepy', 'Dopey', 'Bashful', 'Sneezy', 'Doc', 'Jumpy', 'Bouncy', 'Zippy', 'Snappy', 'Peppy', 'Lively', 'Energetic', 'Vibrant', 'Dynamic', 'Colorful', 'Vivid', 'Brilliant', 'Dazzling', 'Glowing', 'Shimmering', 'Glorious', 'Majestic', 'Regal', 'Noble', 'Proud', 'Confident', 'Fearless', 'Daring', 'Adventurous', 'Curious', 'Playful', 'Mischievous', 'Clever', 'Witty', 'Sharp', 'Quick', 'Agile', 'Nimble', 'Graceful', 'Elegant', 'Stylish', 'Chic', 'Trendy', 'Cool', 'Hip', 'Fresh', 'Modern', 'Classic', 'Vintage', 'Antique', 'Ancient', 'Legendary', 'Mythical', 'Mysterious', 'Enigmatic', 'Cryptic', 'Stealthy', 'Thunderous', 'Zesty'];
+      const nouns = ['Genius', 'Teddy', 'Dragon', 'Panda', 'Wizard', 'Tiger', 'Phoenix', 'Unicorn', 'Fox', 'Shark', 'Eagle', 'Lion', 'Bear', 'Owl', 'Wolf', 'Falcon', 'Hawk', 'Deer', 'Rabbit', 'Turtle', 'Penguin', 'Dolphin', 'Whale', 'Elephant', 'Giraffe', 'Zebra', 'Monkey', 'Gorilla', 'Kangaroo', 'Koala', 'Sloth', 'Hedgehog', 'Squirrel', 'Raccoon', 'Badger', 'Beaver', 'Otter', 'Seal', 'Walrus', 'Polar Bear', 'Grizzly', 'Red Panda', 'Lemur', 'Chimp', 'Orangutan', 'Baboon', 'Moose', 'Elk', 'Caribou', 'Bison', 'Antelope', 'Gazelle', 'Impala', 'Wildebeest', 'Buffalo', 'Yak', 'Camel', 'Llama', 'Alpaca', 'Sheep', 'Goat', 'Pig', 'Cow', 'Horse', 'Donkey', 'Mule', 'Pony', 'Stallion', 'Mare', 'Foal', 'Colt', 'Filly', 'Bull', 'Steer', 'Heifer', 'Ram', 'Ewe', 'Lamb', 'Piglet', 'Pup', 'Kitten', 'Chick', 'Duckling', 'Gosling', 'Cygnets', 'Hatchling', 'Fledgling', 'Joey', 'Pouch', 'Den', 'Lair', 'Nest', 'Burrow', 'Cub', 'Emu', 'Cassowary', 'Kiwi', 'Platypus', 'Echidna', 'Wallaby'];
 
       // Generate funny name from userId (deterministic)
       function generateFunnyName(userId) {
         const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const adjIdx = hash % adjectives.length;
-        const nounIdx = (hash * 7) % nouns.length;
+        const adjIdx = hash % 100;
+        const nounIdx = (hash * 7) % 100;
         return `${adjectives[adjIdx]} ${nouns[nounIdx]}`;
       }
 
