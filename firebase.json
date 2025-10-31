@@ -3,6 +3,7 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
+<<<<<<< HEAD
   "functions": [
     {
       "source": "functions",
@@ -20,10 +21,35 @@
   "hosting": {
     "site": "zeroauthatall",
     "public": "site",
+=======
+  "hosting": {
+    "site": "zeroauthatall",
+    "public": "public",
+>>>>>>> fc3e4e1d73049d4ea6cbbd66d16d585aea36484f
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+<<<<<<< HEAD
+=======
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(js|css)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "max-age=31536000"
+          }
+        ]
+      }
+>>>>>>> fc3e4e1d73049d4ea6cbbd66d16d585aea36484f
     ]
   }
 }

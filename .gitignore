@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Logs
 logs
 *.log
@@ -6,6 +7,11 @@ yarn-debug.log*
 yarn-error.log*
 firebase-debug.log*
 firebase-debug.*.log*
+=======
+node_modules/
+data/*.json
+*.log
+>>>>>>> fc3e4e1d73049d4ea6cbbd66d16d585aea36484f
 
 # Firebase cache
 .firebase/

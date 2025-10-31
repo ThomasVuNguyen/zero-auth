@@ -1,6 +1,10 @@
 # zero-auth
 An identity system without the need for logins
 
+## Try it out
+
+🌐 **Live Demo**: https://zeroauthatall.web.app
+
 ## Local Run
 
 - Prereq: Install Node.js 18+.
