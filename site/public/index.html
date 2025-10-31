@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>zero-auth</title>
+    <style>
+      :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+      body { margin: 2rem; color: #222; }
+      code { background: #f3f3f3; padding: .2rem .35rem; border-radius: 4px; }
+      button { padding: .4rem .7rem; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+      button:hover { background: #f6f6f6; }
+      .row { margin: 1rem 0; }
+      .muted { color: #666; font-size: .9rem; }
+    </style>
+  </head>
+  <body>
+    <h1>zero-auth</h1>
+    <p>Using a persistent <code>browser_id</code> stored in <code>localStorage</code>:</p>
+    <div class="row"><strong>browser_id:</strong> <code id="bid">(loading…)</code></div>
+    <div class="row"><strong>username:</strong> <code id="uname">(loading…)</code></div>
+    <div class="row"><strong>color:</strong> <span id="swatch" style="display:inline-block;width:1rem;height:1rem;border-radius:3px;border:1px solid #ddd;vertical-align:-2px;background:#ccc"></span> <code id="uclr">(loading…)</code></div>
+    <div class="row">
+      <button id="refresh">Refresh</button>
+    </div>
+    <p class="muted">Same browser profile = same identity. Clearing site data resets it.</p>
+
+    <script>
+      function getBrowserId() {
+        const KEY = 'zero_auth_browser_id';
+        let id = localStorage.getItem(KEY);
+        if (!id) {
+          id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : (
+            ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+              (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+            )
+          );
+          localStorage.setItem(KEY, id);
+        }
+        return id;
+      }
+
+      async function fetchCloudIdentity(browserId) {
+        const url = 'https://get-or-create-user-fynpolbbma-uc.a.run.app';
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ browser_id: browserId }),
+        });
+        if (!res.ok) throw new Error('Cloud function error: ' + res.status);
+        return res.json(); // { username, color }
+      }
+
+      async function refresh() {
+        const browserId = getBrowserId();
+        document.getElementById('bid').textContent = browserId;
+        try {
+          const { username, color } = await fetchCloudIdentity(browserId);
+          document.getElementById('uname').textContent = username;
+          document.getElementById('uclr').textContent = color;
+          document.getElementById('swatch').style.background = color || '#ccc';
+        } catch (e) {
+          document.getElementById('uname').textContent = 'Error';
+          document.getElementById('uclr').textContent = 'Error';
+          console.error(e);
+        }
+      }
+
+      (async () => { await refresh(); })();
+      document.getElementById('refresh').addEventListener('click', refresh);
+    </script>
+  </body>
+  </html>
+
